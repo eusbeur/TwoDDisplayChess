@@ -1,0 +1,11 @@
+glcontext==2.3.6
+moderngl==5.6.4
+moderngl-window==2.4.1
+numpy==1.22.4
+Pillow==9.1.1
+pyglet==1.5.26
+PyQt5==5.15.7
+pyrr==0.10.3
+PyWavefront==1.3.3
+scipy==1.8.1
+trimesh==3.12.6
