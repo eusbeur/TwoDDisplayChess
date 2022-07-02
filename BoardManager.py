@@ -68,36 +68,152 @@ class Board:
         coords = self.positions[pos[0]][pos[1]]
         return (pos, coords)
     
-    class BoardManager:
+class BoardManager:
+    
+    def __init__(self):
+        self.mat = np.zeros((8,8),dtype=np.short)
+        self.type_to_short = dict({
+            'Kw' : 11,
+            'Dw' : 10,
+            'Tw' : 9,
+            'Lw' : 8,
+            'Sw' : 7,
+            'Bw' : 6,
+            'Ks' : 5,
+            'Ds' : 4,
+            'Ts' : 3,
+            'Ls' : 2,
+            'Ss' : 1,
+            'Bs' : 0
+        })
+        self.short_to_type = dict({
+            11 : 'Kw',
+            10 : 'Dw',
+            9 : 'Tw',
+            8 : 'Lw',
+            7 : 'Sw',
+            6 : 'Bw',
+            5 : 'Ks',
+            4 : 'Ds',
+            3 : 'Ts',
+            2 : 'Ls',
+            1 : 'Ss',
+            0 : 'Bs'
+        })
         
-        def __init__(self):
-            self.mat = np.zeros((8,8),dtype=np.short)
-            self.type_to_short = dict({
-                'Kw' : 11,
-                'Dw' : 10,
-                'Tw' : 9,
-                'Lw' : 8,
-                'Sw' : 7,
-                'Bw' : 6,
-                'Ks' : 5,
-                'Ds' : 4,
-                'Ts' : 3,
-                'Ls' : 2,
-                'Ss' : 1,
-                'Bs' : 0
-            })
-            self.short_to_type = dict({
-                11 : 'Kw',
-                10 : 'Dw',
-                9 : 'Tw',
-                8 : 'Lw',
-                7 : 'Sw',
-                6 : 'Bw',
-                5 : 'Ks',
-                4 : 'Ds',
-                3 : 'Ts',
-                2 : 'Ls',
-                1 : 'Ss',
-                0 : 'Bs'
-            })
+    def init_from_Board(self, figures: dict):
+        for t, fig in figures.items():
+            self.mat[t[0]][t[1]] = self.type_to_short[fig.figure + ('w' if fig.color == 1 else 's')]
+    
+    def get_fig_moves(self, pos):
+        destinations = []
+        name = self.short_to_char[self.mat[pos[0]][pos[1]][0]]
+        color = 0
+        if name[1] == 's':
+            color = 1
             
+        if  name[0] == 'K':
+            destinations = self.king_moves(pos)
+        elif self.mat[pos[0]][pos[1]][0] == 'D':
+            destinations = self.iterate_diagonals(pos) + self. iterate_straight(pos)
+        elif self.mat[pos[0]][pos[1]][0] == 'T':
+            destinations = self.iterate_straight(pos)
+        elif self.mat[pos[0]][pos[1]][0] == 'L':
+            destinations = self.iterate_diagonals(pos)
+        elif self.mat[pos[0]][pos[1]][0] == 'S':
+            destinations = self.iterate_knight(pos)
+        elif self.mat[pos[0]][pos[1]][0] == 'B':
+            destinations = self.pawn_moves(pos, color)
+        return destinations
+    
+    ## Fig_moves for every type of figure 
+    def iterate_diagonals(self, pos):
+        minuslim = np.min(pos[0],pos[1])
+        pluslim = np.min(7-pos[0],7-pos[1])
+        moves = []
+        x = pos[0]
+        y = pos[1]
+        for i in range(minuslim):
+            x -= 1
+            y -= 1
+            moves.append((x,y))
+    
+        x = pos[0]
+        y = pos[1]
+        for i in range(pluslim):
+            x += 1
+            y += 1
+            moves.append((x,y))
+        minuslim = np.min(pos[0],7-pos[1])
+        pluslim = np.min(7-pos[0],pos[1])
+        moves = []
+        x = pos[0]
+        y = pos[1]
+        for i in range(minuslim):
+            x -= 1
+            y += 1
+            moves.append((x,y))
+    
+        x = pos[0]
+        y = pos[1]
+        for i in range(pluslim):
+            x += 1
+            y -= 1
+            moves.append((x,y))
+        return moves
+    
+    def iterate_straight(self, pos):
+        moves = []
+        x = pos[0]
+        y = pos[1]
+        for i in range(x):
+            x -= 1
+            moves.append((x,y))
+        x = pos[0]
+        y = pos[1]
+        for i in range(y):
+            y -= 1
+            moves.append((x,y))
+        x = pos[0]
+        y = pos[1]
+        for i in range(7-x):
+            x += 1
+            moves.append((x,y))
+        x = pos[0]
+        y = pos[1]
+        for i in range(7-x):
+            x += 1
+            moves.append((x,y))
+        return moves
+        
+    def iterate_knight(self,pos):
+        moves = []
+        for i in range(2):
+            for j in range(2):
+                dest = (pos[0]+(-1)**j, pos[1]+2*(-1)**i)
+                if dest[0] < 0 or dest[0] > 7:
+                    continue
+                if dest[1] < 0 or dest[1] > 7:
+                    continue
+                moves.append(dest)
+        for i in range(2):
+            for j in range(2):
+                dest = (pos[0]+2*(-1)**j, pos[1]+(-1)**i)
+                if dest[0] < 0 or dest[0] > 7:
+                    continue
+                if dest[1] < 0 or dest[1] > 7:
+                    continue
+                moves.append(dest)
+        return moves
+    
+    def pawn_moves(self, pos, color):
+        moves = []
+        if color == 0:
+            if pos[1] == 1:
+                pass
+        return moves
+    
+    def king_moves(self, pos):
+        moves = []
+        return moves
+        
