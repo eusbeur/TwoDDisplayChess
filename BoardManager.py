@@ -73,32 +73,34 @@ class BoardManager:
     def __init__(self):
         self.mat = np.zeros((8,8),dtype=np.short)
         self.type_to_short = dict({
-            'Kw' : 11,
-            'Dw' : 10,
-            'Tw' : 9,
-            'Lw' : 8,
-            'Sw' : 7,
-            'Bw' : 6,
-            'Ks' : 5,
-            'Ds' : 4,
-            'Ts' : 3,
-            'Ls' : 2,
-            'Ss' : 1,
-            'Bs' : 0
+            'Kw' : 12,
+            'Dw' : 11,
+            'Tw' : 10,
+            'Lw' : 9,
+            'Sw' : 8,
+            'Bw' : 7,
+            'Ks' : 6,
+            'Ds' : 5,
+            'Ts' : 4,
+            'Ls' : 3,
+            'Ss' : 2,
+            'Bs' : 1,
+            'empty' : 0,
         })
         self.short_to_type = dict({
-            11 : 'Kw',
-            10 : 'Dw',
-            9 : 'Tw',
-            8 : 'Lw',
-            7 : 'Sw',
-            6 : 'Bw',
-            5 : 'Ks',
-            4 : 'Ds',
-            3 : 'Ts',
-            2 : 'Ls',
-            1 : 'Ss',
-            0 : 'Bs'
+            12 : 'Kw',
+            11 : 'Dw',
+            10 : 'Tw',
+            9 : 'Lw',
+            8 : 'Sw',
+            7 : 'Bw',
+            6 : 'Ks',
+            5 : 'Ds',
+            4 : 'Ts',
+            3 : 'Ls',
+            2 : 'Ss',
+            1 : 'Bs',
+            0 : 'empty',
         })
         
     def init_from_Board(self, figures: dict):
@@ -168,22 +170,22 @@ class BoardManager:
         y = pos[1]
         for i in range(x):
             x -= 1
-            moves.append((x,y))
+            moves.append(pos + (x,y))
         x = pos[0]
         y = pos[1]
         for i in range(y):
             y -= 1
-            moves.append((x,y))
+            moves.append(pos + (x,y))
         x = pos[0]
         y = pos[1]
         for i in range(7-x):
             x += 1
-            moves.append((x,y))
+            moves.append(pos + (x,y))
         x = pos[0]
         y = pos[1]
         for i in range(7-x):
             x += 1
-            moves.append((x,y))
+            moves.append(pos + (x,y))
         return moves
         
     def iterate_knight(self,pos):
@@ -195,7 +197,7 @@ class BoardManager:
                     continue
                 if dest[1] < 0 or dest[1] > 7:
                     continue
-                moves.append(dest)
+                moves.append(pos + dest)
         for i in range(2):
             for j in range(2):
                 dest = (pos[0]+2*(-1)**j, pos[1]+(-1)**i)
@@ -203,17 +205,73 @@ class BoardManager:
                     continue
                 if dest[1] < 0 or dest[1] > 7:
                     continue
-                moves.append(dest)
+                moves.append(pos + dest)
         return moves
     
     def pawn_moves(self, pos, color):
         moves = []
         if color == 0:
-            if pos[1] == 1:
-                pass
+            if pos[1] == 1 and self.mat[pos[0]+2][pos[1]] == 0:
+                moves.append(pos + (pos[0],pos[1]+2))
+            elif pos[1] < 7 and self.mat[pos[0]+1][pos[1]] == 0:
+                moves.append(pos + (pos[0],pos[1]+1))
+            if self.mat[pos[0]+1][pos[1]+1] > 0 and self.mat[pos[0]+1][pos[1]-1] < 7: # feld besetzt von gegnerischer farbe
+                moves.append(pos + (pos[0]+1,pos[1]-1))
+            if self.mat[pos[0]-1][pos[1]+1] > 0 and self.mat[pos[0]+1][pos[1]-1] < 7: # feld besetzt von gegnerischer farbe
+                moves.append(pos + (pos[0]-1,pos[1]-1))
+        if color == 1:
+            if pos[1] == 6 and self.mat[pos[0]-2][pos[1]] == 0:
+                moves.append(pos + (pos[0],pos[1]-2))
+            elif pos[1] > 0 and self.mat[pos[0]-1][pos[1]] == 0:
+                moves.append(pos + (pos[0],pos[1]-1))
+            if self.mat[pos[0]+1][pos[1]-1] > 6: # feld besetzt von gegnerischer farbe
+                moves.append(pos + (pos[0]+1,pos[1]-1))
+            if self.mat[pos[0]-1][pos[1]-1] > 6: # feld besetzt von gegnerischer farbe
+                moves.append(pos + (pos[0]-1,pos[1]-1))
+        
         return moves
     
     def king_moves(self, pos):
         moves = []
+        l = [(1,0),(0,1),(-1,0),(0,-1),(1,1),(1,-1),(-1,0),(-1,1)]
+        for t in l:
+            dest = (pos[0]+t[0],pos[1]+t[1])
+            if dest[0] < 8 and dest[0] >= 0 and dest[1] < 8 and dest[1] >= 0:
+                moves.append(pos + dest)
         return moves
+    
+    # use this for all figs but knight
+    def in_between(self,move):
+        between = []
+        x = np.array([move[0],move[1]])
+        a = 1
+        b = 1
+        direction = np.zeros(2)
+        dest = np.array([move[2],move[3]])
         
+        if x[0] < dest[0]:
+            a = 0
+            direction[0] = 1
+        elif x[0] == dest[0]:
+            direction[0] = 0
+        else:
+            direction[0] = -1
+        if x[1] < dest[1]:
+            b = 0
+            direction[1] = 1
+        elif x[1] == dest[1]:
+            direction[1] = 0
+        else:
+            direction[1] = -1
+            
+        dest = np.array([move[2],move[3]])
+        x += direction
+        while (-1)**a*x[0] < (-1)**a*dest[0] and (-1)**b*x[1] < (-1)**b*dest[1]:
+            between.append(x)
+            x += direction
+        return between
+    
+    # move is 4-tuple with start and destination x,y,x,y
+    # returns true if way is free for move
+    def nothing_in_between(self, move):
+        pass
